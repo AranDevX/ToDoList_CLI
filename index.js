@@ -49,4 +49,27 @@ yargs.command({
         Utilis.readListTasks(argv.list);
     }
 });
+
+// Command to update a list name
+yargs.command({
+    command: "update",
+    describe: "Update the name of a specified list",
+    builder: {
+        oldName: {
+            describe: "Current name of the Todo List",
+            type: "string",
+            demandOption: true,
+        },
+        newName: {
+            describe: "New name for the Todo List",
+            type: "string",
+            demandOption: true,
+        },
+    },
+    handler: function (argv) {
+        console.log("Handler called with args:", argv); // Debugging line
+        Utilis.updateListName(argv.oldName, argv.newName);
+    }
+});
+
 yargs.parse(); // Parse the arguments to activate the yargs commands
