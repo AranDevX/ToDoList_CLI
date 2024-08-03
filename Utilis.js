@@ -61,7 +61,52 @@ const createListTask = (list, task) => {
         console.error("An error occurred, try again:", error);
     }
 };
+const listAllLists = () => {
+    try {
+        // Check if the JSON file exists
+        try {
+            fs.accessSync('datas.json');
+        } catch (err) {
+            // If it does not exist, log that there are no lists
+            console.log("No lists found.");
+            return;
+        }
+
+        // Read from the JSON file if it exists
+        const todoBuffer = fs.readFileSync("datas.json");
+        console.log("File read successfully");
+        
+        // Convert it to string
+        let dataJSON = todoBuffer.toString();
+        console.log("File content:", dataJSON);
+
+        // Parse the data
+        let todos;
+        try {
+            todos = JSON.parse(dataJSON);
+        } catch (parseError) {
+            console.error("Error parsing JSON:", parseError);
+            todos = [];
+        }
+        
+        console.log("Parsed todos:", todos);
+
+        // List all the lists
+        if (todos.length === 0) {
+            console.log("No lists found.");
+        } else {
+            console.log("All lists:");
+            todos.forEach((todo) => {
+                console.log(`List: ${todo.list}, Tasks: ${todo.task}`);
+            });
+        }
+    } catch (error) {
+        console.error("An error occurred, try again:", error);
+    }
+};
+
 
 module.exports = {
     createListTask,
+    listAllLists,
 };

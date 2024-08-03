@@ -24,4 +24,12 @@ yargs.command({
     }
 });
 
+yargs.command({
+    command: "listit",
+    describe: "List all Todo Lists",
+    handler: function () {
+        Utilis.listAllLists();
+    }
+});
+
 yargs.parse(); // Parse the arguments to activate the yargs commands
