@@ -293,6 +293,64 @@ const deleteList = (list) => {
     }
 };
 
+const deleteTask = (list, taskToDelete) => {
+    try {
+        // Check if the JSON file exists
+        try {
+            fs.accessSync('datas.json');
+        } catch (err) {
+            console.log("No lists found.");
+            return;
+        }
+
+        // Read from the JSON file if it exists
+        const todoBuffer = fs.readFileSync("datas.json");
+        console.log("File read successfully");
+
+        // Convert it to string
+        let dataJSON = todoBuffer.toString();
+        console.log("File content:", dataJSON);
+
+        // Parse the data
+        let todos;
+        try {
+            todos = JSON.parse(dataJSON);
+        } catch (parseError) {
+            console.error("Error parsing JSON:", parseError);
+            todos = [];
+        }
+
+        console.log("Parsed todos:", todos);
+
+        // Find the specified list
+        const todoList = todos.find(todo => todo.list === list);
+        if (!todoList) {
+            console.log(`List "${list}" not found.`);
+            return;
+        }
+
+        // Split tasks into an array and filter out the task to delete
+        const tasks = todoList.task.split(', ');
+        const filteredTasks = tasks.filter(task => task !== taskToDelete);
+
+        // If the task was not found
+        if (filteredTasks.length === tasks.length) {
+            console.log(`Task "${taskToDelete}" not found in list "${list}".`);
+            return;
+        }
+
+        // Update the task string
+        todoList.task = filteredTasks.join(', ');
+
+        // Write back the updated data to the JSON file
+        dataJSON = JSON.stringify(todos, null, 2);
+        fs.writeFileSync("datas.json", dataJSON);
+        console.log(`Task "${taskToDelete}" deleted successfully from list "${list}".`);
+    } catch (error) {
+        console.error("An error occurred, try again:", error);
+    }
+};
+
 
 module.exports = {
     createListTask,
@@ -301,4 +359,5 @@ module.exports = {
     updateListName,
     updateTask,
     deleteList,
+    deleteTask,
 };
