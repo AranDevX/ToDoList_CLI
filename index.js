@@ -115,4 +115,26 @@ yargs.command({
     }
 });
 
+// Command to delete a task from a specified list
+yargs.command({
+    command: "deleteTask",
+    describe: "Delete a task from a specified list",
+    builder: {
+        list: {
+            describe: "Todo List title",
+            type: "string",
+            demandOption: true,
+        },
+        task: {
+            describe: "Task title to delete",
+            type: "string",
+            demandOption: true,
+        },
+    },
+    handler: function (argv) {
+        console.log("Handler called with args:", argv); // Debugging line
+        Utilis.deleteTask(argv.list, argv.task);
+    }
+});
+
 yargs.parse(); // Parse the arguments to activate the yargs commands
