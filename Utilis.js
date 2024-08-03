@@ -246,6 +246,53 @@ const updateTask = (list, oldTask, newTask) => {
     }
 };
 
+const deleteList = (list) => {
+    try {
+        // Check if the JSON file exists
+        try {
+            fs.accessSync('datas.json');
+        } catch (err) {
+            console.log("No lists found.");
+            return;
+        }
+
+        // Read from the JSON file if it exists
+        const todoBuffer = fs.readFileSync("datas.json");
+        console.log("File read successfully");
+
+        // Convert it to string
+        let dataJSON = todoBuffer.toString();
+        console.log("File content:", dataJSON);
+
+        // Parse the data
+        let todos;
+        try {
+            todos = JSON.parse(dataJSON);
+        } catch (parseError) {
+            console.error("Error parsing JSON:", parseError);
+            todos = [];
+        }
+
+        console.log("Parsed todos:", todos);
+
+        // Filter out the specified list
+        const filteredTodos = todos.filter(todo => todo.list !== list);
+
+        // If no lists were removed, notify the user
+        if (filteredTodos.length === todos.length) {
+            console.log(`List "${list}" not found.`);
+            return;
+        }
+
+        // Write back the updated data to the JSON file
+        dataJSON = JSON.stringify(filteredTodos, null, 2);
+        fs.writeFileSync("datas.json", dataJSON);
+        console.log(`List "${list}" deleted successfully.`);
+    } catch (error) {
+        console.error("An error occurred, try again:", error);
+    }
+};
+
 
 module.exports = {
     createListTask,
@@ -253,4 +300,5 @@ module.exports = {
     readListTasks,
     updateListName,
     updateTask,
+    deleteList,
 };
