@@ -105,8 +105,50 @@ const listAllLists = () => {
     }
 };
 
+const readListTasks = (list) => {
+    try {
+        // Check if the JSON file exists
+        try {
+            fs.accessSync('datas.json');
+        } catch (err) {
+            console.log("No lists found.");
+            return;
+        }
+
+        // Read from the JSON file if it exists
+        const todoBuffer = fs.readFileSync("datas.json");
+        console.log("File read successfully");
+
+        // Convert it to string
+        let dataJSON = todoBuffer.toString();
+        console.log("File content:", dataJSON);
+
+        // Parse the data
+        let todos;
+        try {
+            todos = JSON.parse(dataJSON);
+        } catch (parseError) {
+            console.error("Error parsing JSON:", parseError);
+            todos = [];
+        }
+
+        console.log("Parsed todos:", todos);
+
+        // Find the specified list and print its tasks
+        const todo = todos.find((todo) => todo.list === list);
+        if (todo) {
+            console.log(`Tasks for list "${list}": ${todo.task}`);
+        } else {
+            console.log(`List "${list}" not found.`);
+        }
+    } catch (error) {
+        console.error("An error occurred, try again:", error);
+    }
+};
+
 
 module.exports = {
     createListTask,
     listAllLists,
+    readListTasks,
 };

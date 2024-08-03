@@ -24,6 +24,7 @@ yargs.command({
     }
 });
 
+// Command to list all lists with their tasks
 yargs.command({
     command: "listit",
     describe: "List all Todo Lists",
@@ -32,4 +33,20 @@ yargs.command({
     }
 });
 
+// Command to read tasks from a specified list
+yargs.command({
+    command: "read",
+    describe: "Read tasks from a specified list",
+    builder: {
+        list: {
+            describe: "Todo List title",
+            type: "string",
+            demandOption: true,
+        },
+    },
+    handler: function (argv) {
+        console.log("Handler called with args:", argv); // Debugging line
+        Utilis.readListTasks(argv.list);
+    }
+});
 yargs.parse(); // Parse the arguments to activate the yargs commands
