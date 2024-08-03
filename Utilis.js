@@ -190,10 +190,67 @@ const updateListName = (oldList, newList) => {
     }
 };
 
+const updateTask = (list, oldTask, newTask) => {
+    try {
+        // Check if the JSON file exists
+        try {
+            fs.accessSync('datas.json');
+        } catch (err) {
+            console.log("No lists found.");
+            return;
+        }
+
+        // Read from the JSON file if it exists
+        const todoBuffer = fs.readFileSync("datas.json");
+        console.log("File read successfully");
+
+        // Convert it to string
+        let dataJSON = todoBuffer.toString();
+        console.log("File content:", dataJSON);
+
+        // Parse the data
+        let todos;
+        try {
+            todos = JSON.parse(dataJSON);
+        } catch (parseError) {
+            console.error("Error parsing JSON:", parseError);
+            todos = [];
+        }
+
+        console.log("Parsed todos:", todos);
+
+        // Find the specified list
+        const todoList = todos.find(todo => todo.list === list);
+        if (!todoList) {
+            console.log(`List "${list}" not found.`);
+            return;
+        }
+
+        // Update the specified task
+        const tasks = todoList.task.split(', '); // Split tasks into an array
+        const taskIndex = tasks.indexOf(oldTask);
+        if (taskIndex === -1) {
+            console.log(`Task "${oldTask}" not found in list "${list}".`);
+            return;
+        }
+
+        tasks[taskIndex] = newTask; // Update the task
+        todoList.task = tasks.join(', '); // Join tasks back to a string
+
+        // Write back the updated data to the JSON file
+        dataJSON = JSON.stringify(todos, null, 2);
+        fs.writeFileSync("datas.json", dataJSON);
+        console.log(`Task "${oldTask}" updated to "${newTask}" in list "${list}".`);
+    } catch (error) {
+        console.error("An error occurred, try again:", error);
+    }
+};
+
 
 module.exports = {
     createListTask,
     listAllLists,
     readListTasks,
     updateListName,
+    updateTask,
 };
