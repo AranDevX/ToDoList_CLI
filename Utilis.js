@@ -12,17 +12,35 @@ const createListTask = (list, task) => {
 
         // Read from the JSON file if it exists
         const todoBuffer = fs.readFileSync("datas.json");
+        console.log("File read successfully");
+        
         // Convert it to string
         let dataJSON = todoBuffer.toString();
+        console.log("File content:", dataJSON);
+
         // Parse the data
-        const todos = JSON.parse(dataJSON);
+        let todos;
+        try {
+            todos = JSON.parse(dataJSON);
+        } catch (parseError) {
+            console.error("Error parsing JSON:", parseError);
+            todos = [];
+        }
+        
+        console.log("Parsed todos:", todos);
 
         // Find the todo list
         let listExists = false;
         for (let i = 0; i < todos.length; i++) {
             if (todos[i].list === list) {
                 listExists = true;
-                todos[i].tasks.push(task);
+
+                // If the task property already exists, append the new task
+                if (todos[i].task) {
+                    todos[i].task += `, ${task}`; // Concatenate tasks with a comma
+                } else {
+                    todos[i].task = task; // Set the task if it does not exist
+                }
                 break;
             }
         }
@@ -31,7 +49,7 @@ const createListTask = (list, task) => {
         if (!listExists) {
             todos.push({
                 list: list,
-                tasks: [task],
+                task: task, // Store the first task as a string
             });
         }
 
@@ -40,7 +58,7 @@ const createListTask = (list, task) => {
         fs.writeFileSync("datas.json", dataJSON);
         console.log("Task added successfully");
     } catch (error) {
-        console.log("An error occurred, try again");
+        console.error("An error occurred, try again:", error);
     }
 };
 
