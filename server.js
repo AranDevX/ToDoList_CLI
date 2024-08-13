@@ -1,80 +1,142 @@
-const express = require("express");
-const bodyParser = require("body-parser");
-const Utilis = require("./Utilis");
+const express = require('express');
+const fs = require('fs');
 const app = express();
-const PORT = process.env.PORT || 3000;
+const port = 3000;
 
-app.use(bodyParser.json()); // Parse JSON bodies
+app.use(express.json());
 
-// Endpoint to add a task
-app.post("/tasks", (req, res) => {
-    const { list, task } = req.body;
-    if (!list || !task) {
-        return res.status(400).json({ message: "List and task are required." });
+// Example function to retrieve lists from the JSON file
+const getAllLists = () => {
+    try {
+        const dataBuffer = fs.readFileSync('datas.json');
+        const dataJSON = dataBuffer.toString();
+        const todos = JSON.parse(dataJSON);
+        return todos;
+    } catch (e) {
+        return {}; // Return an empty object if the file doesn't exist or there's an error
     }
-    Utilis.createListTask(list, task);
-    res.status(201).json({ message: "Task added successfully." });
-});
+};
 
-// Endpoint to list all lists
-app.get("/lists", (req, res) => {
-    const todos = Utilis.listAllLists();
-    res.status(200).json(todos);
-});
+// Example function to save lists to the JSON file
+const saveAllLists = (todos) => {
+    const dataJSON = JSON.stringify(todos, null, 2);
+    fs.writeFileSync('datas.json', dataJSON);
+};
 
-// Endpoint to read tasks from a specified list
-app.get("/lists/:list", (req, res) => {
-    const { list } = req.params;
-    const tasks = Utilis.readListTasks(list);
-    res.status(200).json(tasks);
-});
-
-// Endpoint to update a list name
-app.put("/lists/:oldName", (req, res) => {
-    const { oldName } = req.params;
-    const { newName } = req.body;
-    if (!newName) {
-        return res.status(400).json({ message: "New name is required." });
+// Define the GET route for /lists
+app.get('/lists', (req, res) => {
+    try {
+        const lists = getAllLists();
+        res.json(lists); // Send the lists as a JSON response
+    } catch (error) {
+        res.status(500).json({ message: "An error occurred", error: error.message });
     }
-    Utilis.updateListName(oldName, newName);
-    res.status(200).json({ message: "List name updated successfully." });
 });
 
-// Endpoint to update a task
-app.put("/lists/:list/tasks", (req, res) => {
-    const { list } = req.params;
-    const { oldTask, newTask } = req.body;
-    if (!oldTask || !newTask) {
-        return res.status(400).json({ message: "Old task and new task are required." });
+// Define the POST route to add a new task to a list
+app.post('/lists', (req, res) => {
+    try {
+        const { list, task } = req.body;
+        let todos = getAllLists();
+
+        if (!todos[list]) {
+            todos[list] = { tasks: [] };
+        }
+        todos[list].tasks.push(task);
+        saveAllLists(todos);
+        res.status(201).json({ message: "Task added successfully", list: todos[list] });
+    } catch (error) {
+        res.status(500).json({ message: "An error occurred", error: error.message });
     }
-    Utilis.updateTask(list, oldTask, newTask);
-    res.status(200).json({ message: "Task updated successfully." });
 });
 
-// Endpoint to delete a specified list
-app.delete("/lists/:list", (req, res) => {
-    const { list } = req.params;
-    Utilis.deleteList(list);
-    res.status(200).json({ message: "List deleted successfully." });
+// Define the PUT route to update a list name
+app.put('/lists/:oldListName', (req, res) => {
+    try {
+        const oldListName = req.params.oldListName;
+        const { newListName } = req.body;
+        let todos = getAllLists();
+
+        if (todos[oldListName]) {
+            todos[newListName] = todos[oldListName];
+            delete todos[oldListName];
+            saveAllLists(todos);
+            res.json({ message: `List name updated from "${oldListName}" to "${newListName}"` });
+        } else {
+            res.status(404).json({ message: `List "${oldListName}" not found.` });
+        }
+    } catch (error) {
+        res.status(500).json({ message: "An error occurred", error: error.message });
+    }
 });
 
-// Endpoint to delete a task from a specified list
-app.delete("/lists/:list/tasks", (req, res) => {
-    const { list } = req.params;
-    const { task } = req.body;
-    Utilis.deleteTask(list, task);
-    res.status(200).json({ message: "Task deleted successfully." });
+// Define the PUT route to update a task in a list
+app.put('/lists/:list/tasks', (req, res) => {
+    try {
+        const list = req.params.list;
+        const { oldTask, newTask } = req.body;
+        let todos = getAllLists();
+
+        if (todos[list]) {
+            const taskIndex = todos[list].tasks.indexOf(oldTask);
+            if (taskIndex !== -1) {
+                todos[list].tasks[taskIndex] = newTask;
+                saveAllLists(todos);
+                res.json({ message: `Task updated from "${oldTask}" to "${newTask}"` });
+            } else {
+                res.status(404).json({ message: `Task "${oldTask}" not found in list "${list}".` });
+            }
+        } else {
+            res.status(404).json({ message: `List "${list}" not found.` });
+        }
+    } catch (error) {
+        res.status(500).json({ message: "An error occurred", error: error.message });
+    }
 });
 
-// Endpoint to mark a task as completed
-app.put("/lists/:list/tasks/complete", (req, res) => {
-    const { list } = req.params;
-    const { task } = req.body;
-    Utilis.completeTask(list, task);
-    res.status(200).json({ message: "Task marked as completed." });
+// Define the DELETE route to delete a list
+app.delete('/lists/:list', (req, res) => {
+    try {
+        const list = req.params.list;
+        let todos = getAllLists();
+
+        if (todos[list]) {
+            delete todos[list];
+            saveAllLists(todos);
+            res.json({ message: `List "${list}" deleted successfully.` });
+        } else {
+            res.status(404).json({ message: `List "${list}" not found.` });
+        }
+    } catch (error) {
+        res.status(500).json({ message: "An error occurred", error: error.message });
+    }
+});
+
+// Define the DELETE route to delete a task from a list
+app.delete('/lists/:list/tasks', (req, res) => {
+    try {
+        const list = req.params.list;
+        const { task } = req.body;
+        let todos = getAllLists();
+
+        if (todos[list]) {
+            const taskIndex = todos[list].tasks.indexOf(task);
+            if (taskIndex !== -1) {
+                todos[list].tasks.splice(taskIndex, 1);
+                saveAllLists(todos);
+                res.json({ message: `Task "${task}" deleted successfully from list "${list}".` });
+            } else {
+                res.status(404).json({ message: `Task "${task}" not found in list "${list}".` });
+            }
+        } else {
+            res.status(404).json({ message: `List "${list}" not found.` });
+        }
+    } catch (error) {
+        res.status(500).json({ message: "An error occurred", error: error.message });
+    }
 });
 
 // Start the server
-app.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
+app.listen(port, () => {
+    console.log(`Server running on http://localhost:${port}`);
 });
