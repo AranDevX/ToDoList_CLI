@@ -2,7 +2,7 @@
 const yargs = require("yargs");
 const Utilis = require("./Utilis");
 
-// This is where we will put create List first
+// Command to add a List-Task
 yargs.command({
     command: "add",
     describe: "Add a List-Task",
@@ -50,7 +50,7 @@ yargs.command({
     }
 });
 
-// Command to update a list name
+// Command to update the name of a specified list
 yargs.command({
     command: "update",
     describe: "Update the name of a specified list",
@@ -71,7 +71,8 @@ yargs.command({
         Utilis.updateListName(argv.oldName, argv.newName);
     }
 });
-//command to update a task
+
+// Command to update a task
 yargs.command({
     command: "updateTask",
     describe: "Update a task in a specified list",
@@ -134,6 +135,28 @@ yargs.command({
     handler: function (argv) {
         console.log("Handler called with args:", argv); // Debugging line
         Utilis.deleteTask(argv.list, argv.task);
+    }
+});
+
+// Command to mark a task as completed
+yargs.command({
+    command: "complete",
+    describe: "Mark a task as completed in a specified list",
+    builder: {
+        list: {
+            describe: "Todo List title",
+            type: "string",
+            demandOption: true,
+        },
+        task: {
+            describe: "Task title to complete",
+            type: "string",
+            demandOption: true,
+        },
+    },
+    handler: function (argv) {
+        console.log("Handler called with args:", argv); // Debugging line
+        Utilis.completeTask(argv.list, argv.task);
     }
 });
 

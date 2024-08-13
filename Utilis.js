@@ -1,30 +1,36 @@
 const fs = require("fs");
 
 const createListTask = (list, task) => {
+    if (!task || !task.trim()) {
+        console.error("Task title cannot be empty.");
+        return;
+    }
+
     try {
         // Check if the JSON file exists
         try {
             fs.accessSync('datas.json');
         } catch (err) {
-            // If it does not exist, create a new JSON file
             fs.writeFileSync('datas.json', JSON.stringify({}));
         }
 
         // Read from the JSON file
         const todoBuffer = fs.readFileSync("datas.json");
-        console.log("File read successfully");
-
-        // Parse the data
         let todos = JSON.parse(todoBuffer.toString());
-        console.log("Parsed todos:", todos);
 
         // Check if the list exists
         if (!todos[list]) {
-            todos[list] = { tasks: [] }; // Create a new list if it doesn't exist
+            todos[list] = { tasks: [] };
         }
 
-        // Add the new task to the list
-        todos[list].tasks.push(task);
+        // Check for duplicates
+        if (todos[list].tasks.some(existingTask => existingTask.title === task)) {
+            console.log(`Task "${task}" already exists in list "${list}".`);
+            return;
+        }
+
+        // Add the new task as an object with a completion status
+        todos[list].tasks.push({ title: task, completed: false });
 
         // Write back to the JSON file
         const dataJSON = JSON.stringify(todos, null, 2);
@@ -37,7 +43,6 @@ const createListTask = (list, task) => {
 
 const listAllLists = () => {
     try {
-        // Check if the JSON file exists
         try {
             fs.accessSync('datas.json');
         } catch (err) {
@@ -45,21 +50,16 @@ const listAllLists = () => {
             return;
         }
 
-        // Read from the JSON file
         const todoBuffer = fs.readFileSync("datas.json");
-        console.log("File read successfully");
-
-        // Parse the data
         const todos = JSON.parse(todoBuffer.toString());
-        console.log("Parsed todos:", todos);
 
-        // List all the lists
         if (Object.keys(todos).length === 0) {
             console.log("No lists found.");
         } else {
             console.log("All lists:");
             for (let list in todos) {
-                console.log(`List: ${list}, Tasks: ${todos[list].tasks.join(', ')}`);
+                const tasks = todos[list].tasks.map(task => `${task.title} (Completed: ${task.completed})`).join(', ');
+                console.log(`List: ${list}, Tasks: ${tasks}`);
             }
         }
     } catch (error) {
@@ -69,7 +69,6 @@ const listAllLists = () => {
 
 const readListTasks = (list) => {
     try {
-        // Check if the JSON file exists
         try {
             fs.accessSync('datas.json');
         } catch (err) {
@@ -77,17 +76,12 @@ const readListTasks = (list) => {
             return;
         }
 
-        // Read from the JSON file
         const todoBuffer = fs.readFileSync("datas.json");
-        console.log("File read successfully");
-
-        // Parse the data
         const todos = JSON.parse(todoBuffer.toString());
-        console.log("Parsed todos:", todos);
 
-        // Find the specified list and print its tasks
         if (todos[list]) {
-            console.log(`Tasks for list "${list}": ${todos[list].tasks.join(', ')}`);
+            const tasks = todos[list].tasks.map(task => `${task.title} (Completed: ${task.completed})`).join(', ');
+            console.log(`Tasks for list "${list}": ${tasks}`);
         } else {
             console.log(`List "${list}" not found.`);
         }
@@ -98,7 +92,6 @@ const readListTasks = (list) => {
 
 const updateListName = (oldList, newList) => {
     try {
-        // Check if the JSON file exists
         try {
             fs.accessSync('datas.json');
         } catch (err) {
@@ -106,15 +99,9 @@ const updateListName = (oldList, newList) => {
             return;
         }
 
-        // Read from the JSON file
         const todoBuffer = fs.readFileSync("datas.json");
-        console.log("File read successfully");
-
-        // Parse the data
         let todos = JSON.parse(todoBuffer.toString());
-        console.log("Parsed todos:", todos);
 
-        // Find the specified list and update its name
         if (todos[oldList]) {
             todos[newList] = todos[oldList]; // Rename the list
             delete todos[oldList]; // Remove the old list name
@@ -131,8 +118,12 @@ const updateListName = (oldList, newList) => {
 };
 
 const updateTask = (list, oldTask, newTask) => {
+    if (!oldTask || !oldTask.trim() || !newTask || !newTask.trim()) {
+        console.error("Task titles cannot be empty.");
+        return;
+    }
+
     try {
-        // Check if the JSON file exists
         try {
             fs.accessSync('datas.json');
         } catch (err) {
@@ -140,20 +131,13 @@ const updateTask = (list, oldTask, newTask) => {
             return;
         }
 
-        // Read from the JSON file
         const todoBuffer = fs.readFileSync("datas.json");
-        console.log("File read successfully");
-
-        // Parse the data
         let todos = JSON.parse(todoBuffer.toString());
-        console.log("Parsed todos:", todos);
 
-        // Find the specified list
         if (todos[list]) {
-            const taskIndex = todos[list].tasks.indexOf(oldTask);
+            const taskIndex = todos[list].tasks.findIndex(task => task.title === oldTask);
             if (taskIndex !== -1) {
-                todos[list].tasks[taskIndex] = newTask;
-
+                todos[list].tasks[taskIndex].title = newTask; // Update the task title
                 const dataJSON = JSON.stringify(todos, null, 2);
                 fs.writeFileSync("datas.json", dataJSON);
                 console.log(`Task "${oldTask}" updated to "${newTask}" in list "${list}".`);
@@ -170,7 +154,6 @@ const updateTask = (list, oldTask, newTask) => {
 
 const deleteList = (list) => {
     try {
-        // Check if the JSON file exists
         try {
             fs.accessSync('datas.json');
         } catch (err) {
@@ -178,15 +161,9 @@ const deleteList = (list) => {
             return;
         }
 
-        // Read from the JSON file
         const todoBuffer = fs.readFileSync("datas.json");
-        console.log("File read successfully");
-
-        // Parse the data
         let todos = JSON.parse(todoBuffer.toString());
-        console.log("Parsed todos:", todos);
 
-        // Delete the specified list
         if (todos[list]) {
             delete todos[list];
 
@@ -202,8 +179,12 @@ const deleteList = (list) => {
 };
 
 const deleteTask = (list, taskToDelete) => {
+    if (!taskToDelete || !taskToDelete.trim()) {
+        console.error("Task title cannot be empty.");
+        return;
+    }
+
     try {
-        // Check if the JSON file exists
         try {
             fs.accessSync('datas.json');
         } catch (err) {
@@ -211,25 +192,54 @@ const deleteTask = (list, taskToDelete) => {
             return;
         }
 
-        // Read from the JSON file
         const todoBuffer = fs.readFileSync("datas.json");
-        console.log("File read successfully");
-
-        // Parse the data
         let todos = JSON.parse(todoBuffer.toString());
-        console.log("Parsed todos:", todos);
 
-        // Find the specified list
         if (todos[list]) {
-            const taskIndex = todos[list].tasks.indexOf(taskToDelete);
+            const taskIndex = todos[list].tasks.findIndex(task => task.title === taskToDelete);
             if (taskIndex !== -1) {
-                todos[list].tasks.splice(taskIndex, 1);
-
+                todos[list].tasks.splice(taskIndex, 1); // Remove the task
                 const dataJSON = JSON.stringify(todos, null, 2);
                 fs.writeFileSync("datas.json", dataJSON);
                 console.log(`Task "${taskToDelete}" deleted successfully from list "${list}".`);
             } else {
                 console.log(`Task "${taskToDelete}" not found in list "${list}".`);
+            }
+        } else {
+            console.log(`List "${list}" not found.`);
+        }
+    } catch (error) {
+        console.error("An error occurred, try again:", error);
+    }
+};
+
+// New function to complete a task
+const completeTask = (list, taskToComplete) => {
+    if (!taskToComplete || !taskToComplete.trim()) {
+        console.error("Task title cannot be empty.");
+        return;
+    }
+
+    try {
+        try {
+            fs.accessSync('datas.json');
+        } catch (err) {
+            console.log("No lists found.");
+            return;
+        }
+
+        const todoBuffer = fs.readFileSync("datas.json");
+        let todos = JSON.parse(todoBuffer.toString());
+
+        if (todos[list]) {
+            const task = todos[list].tasks.find(task => task.title === taskToComplete);
+            if (task) {
+                task.completed = true; // Mark the task as completed
+                const dataJSON = JSON.stringify(todos, null, 2);
+                fs.writeFileSync("datas.json", dataJSON);
+                console.log(`Task "${taskToComplete}" marked as completed in list "${list}".`);
+            } else {
+                console.log(`Task "${taskToComplete}" not found in list "${list}".`);
             }
         } else {
             console.log(`List "${list}" not found.`);
@@ -247,4 +257,5 @@ module.exports = {
     updateTask,
     deleteList,
     deleteTask,
+    completeTask, // Exporting the new function
 };
