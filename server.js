@@ -5,7 +5,7 @@ const port = 3000;
 
 app.use(express.json());
 
-// Example function to retrieve lists from the JSON file
+// Function to retrieve lists from the JSON file
 const getAllLists = () => {
     try {
         const dataBuffer = fs.readFileSync('datas.json');
@@ -17,7 +17,7 @@ const getAllLists = () => {
     }
 };
 
-// Example function to save lists to the JSON file
+// Function to save lists to the JSON file
 const saveAllLists = (todos) => {
     const dataJSON = JSON.stringify(todos, null, 2);
     fs.writeFileSync('datas.json', dataJSON);
@@ -42,8 +42,11 @@ app.post('/lists', (req, res) => {
         if (!todos[list]) {
             todos[list] = { tasks: [] };
         }
-        todos[list].tasks.push(task);
+
+        // Add the new task with a completed status of false
+        todos[list].tasks.push({ title: task, completed: false });
         saveAllLists(todos);
+
         res.status(201).json({ message: "Task added successfully", list: todos[list] });
     } catch (error) {
         res.status(500).json({ message: "An error occurred", error: error.message });
@@ -78,9 +81,9 @@ app.put('/lists/:list/tasks', (req, res) => {
         let todos = getAllLists();
 
         if (todos[list]) {
-            const taskIndex = todos[list].tasks.indexOf(oldTask);
+            const taskIndex = todos[list].tasks.findIndex(task => task.title === oldTask);
             if (taskIndex !== -1) {
-                todos[list].tasks[taskIndex] = newTask;
+                todos[list].tasks[taskIndex].title = newTask;
                 saveAllLists(todos);
                 res.json({ message: `Task updated from "${oldTask}" to "${newTask}"` });
             } else {
@@ -120,11 +123,35 @@ app.delete('/lists/:list/tasks', (req, res) => {
         let todos = getAllLists();
 
         if (todos[list]) {
-            const taskIndex = todos[list].tasks.indexOf(task);
+            const taskIndex = todos[list].tasks.findIndex(task => task.title === task);
             if (taskIndex !== -1) {
                 todos[list].tasks.splice(taskIndex, 1);
                 saveAllLists(todos);
                 res.json({ message: `Task "${task}" deleted successfully from list "${list}".` });
+            } else {
+                res.status(404).json({ message: `Task "${task}" not found in list "${list}".` });
+            }
+        } else {
+            res.status(404).json({ message: `List "${list}" not found.` });
+        }
+    } catch (error) {
+        res.status(500).json({ message: "An error occurred", error: error.message });
+    }
+});
+
+// Define the PUT route to mark a task as completed
+app.put('/lists/:list/tasks/complete', (req, res) => {
+    try {
+        const list = req.params.list;
+        const { task } = req.body;
+        let todos = getAllLists();
+
+        if (todos[list]) {
+            const taskIndex = todos[list].tasks.findIndex(t => t.title === task);
+            if (taskIndex !== -1) {
+                todos[list].tasks[taskIndex].completed = true;
+                saveAllLists(todos);
+                res.json({ message: `Task "${task}" marked as completed in list "${list}".` });
             } else {
                 res.status(404).json({ message: `Task "${task}" not found in list "${list}".` });
             }
