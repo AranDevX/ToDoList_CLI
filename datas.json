@@ -1,10 +1,11 @@
-{
-  "Work": {
+[
+  {
+    "listName": "Work",
     "tasks": [
       {
-        "title": "playing football",
+        "title": "football",
         "completed": false
       }
     ]
   }
-}
+]

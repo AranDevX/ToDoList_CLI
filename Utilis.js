@@ -1,194 +1,155 @@
 const fs = require("fs");
 
-const getTodos = () => {
+const getData = () => {
     try {
-        fs.accessSync('datas.json');
-    } catch (err) {
-        fs.writeFileSync('datas.json', JSON.stringify([])); // Initialize with an empty array if the file doesn't exist
+        const todoBuffer = fs.readFileSync("datas.json");
+        return JSON.parse(todoBuffer.toString());
+    } catch (e) {
+        return []; // Return an empty array if the file doesn't exist or an error occurs
     }
-    
-    const todoBuffer = fs.readFileSync("datas.json");
-    return JSON.parse(todoBuffer.toString());
 };
 
-const saveTodos = (todos) => {
-    const dataJSON = JSON.stringify(todos, null, 2);
+const saveData = (data) => {
+    const dataJSON = JSON.stringify(data, null, 2);
     fs.writeFileSync("datas.json", dataJSON);
 };
 
-const createListTask = (list, task) => {
-    if (!task || !task.trim()) {
+const createListTask = (listName, taskTitle) => {
+    if (!taskTitle || !taskTitle.trim()) {
         console.error("Task title cannot be empty.");
         return;
     }
 
-    try {
-        let todos = getTodos();
+    const data = getData();
 
-        let listIndex = todos.findIndex(item => item.list === list);
+    let list = data.find((l) => l.listName === listName);
 
-        if (listIndex === -1) {
-            todos.push({ list, tasks: [{ title: task, completed: false }] });
-        } else {
-            if (todos[listIndex].tasks.some(existingTask => existingTask.title === task)) {
-                console.log(`Task "${task}" already exists in list "${list}".`);
-                return;
-            }
-            todos[listIndex].tasks.push({ title: task, completed: false });
-        }
-
-        saveTodos(todos);
-        console.log("Task added successfully");
-    } catch (error) {
-        console.error("An error occurred, try again:", error);
+    if (!list) {
+        list = { listName, tasks: [] };
+        data.push(list);
     }
+
+    const taskExists = list.tasks.some((task) => task.title === taskTitle);
+
+    if (taskExists) {
+        console.log(`Task "${taskTitle}" already exists in list "${listName}".`);
+        return;
+    }
+
+    list.tasks.push({ title: taskTitle, completed: false });
+    saveData(data);
+    console.log("Task added successfully");
 };
 
 const listAllLists = () => {
-    try {
-        let todos = getTodos();
+    const data = getData();
 
-        if (todos.length === 0) {
-            console.log("No lists found.");
-        } else {
-            console.log("All lists:");
-            todos.forEach(todo => {
-                const tasks = todo.tasks.map(task => `${task.title} (Completed: ${task.completed})`).join(', ');
-                console.log(`List: ${todo.list}, Tasks: ${tasks}`);
-            });
-        }
-    } catch (error) {
-        console.error("An error occurred, try again:", error);
+    if (data.length === 0) {
+        console.log("No lists found.");
+    } else {
+        console.log("All lists:");
+        data.forEach(list => {
+            const tasks = list.tasks.map(task => `${task.title} (Completed: ${task.completed})`).join(', ');
+            console.log(`List: ${list.listName}, Tasks: ${tasks}`);
+        });
     }
 };
 
-const readListTasks = (list) => {
-    try {
-        let todos = getTodos();
-        let listData = todos.find(item => item.list === list);
+const readListTasks = (listName) => {
+    const data = getData();
 
-        if (listData) {
-            const tasks = listData.tasks.map(task => `${task.title} (Completed: ${task.completed})`).join(', ');
-            console.log(`Tasks for list "${list}": ${tasks}`);
-        } else {
-            console.log(`List "${list}" not found.`);
-        }
-    } catch (error) {
-        console.error("An error occurred, try again:", error);
+    const list = data.find((l) => l.listName === listName);
+
+    if (list) {
+        const tasks = list.tasks.map(task => `${task.title} (Completed: ${task.completed})`).join(', ');
+        console.log(`Tasks for list "${listName}": ${tasks}`);
+    } else {
+        console.log(`List "${listName}" not found.`);
     }
 };
 
-const updateListName = (oldList, newList) => {
-    try {
-        let todos = getTodos();
-        let listIndex = todos.findIndex(item => item.list === oldList);
+const updateListName = (oldListName, newListName) => {
+    const data = getData();
 
-        if (listIndex !== -1) {
-            todos[listIndex].list = newList;
-            saveTodos(todos);
-            console.log(`List name "${oldList}" updated to "${newList}"`);
-        } else {
-            console.log(`List "${oldList}" not found.`);
-        }
-    } catch (error) {
-        console.error("An error occurred, try again:", error);
+    const list = data.find((l) => l.listName === oldListName);
+
+    if (list) {
+        list.listName = newListName;
+        saveData(data);
+        console.log(`List name "${oldListName}" updated to "${newListName}"`);
+    } else {
+        console.log(`List "${oldListName}" not found.`);
     }
 };
 
-const updateTask = (list, oldTask, newTask) => {
-    if (!oldTask || !oldTask.trim() || !newTask || !newTask.trim()) {
-        console.error("Task titles cannot be empty.");
-        return;
-    }
+const updateTask = (listName, oldTaskTitle, newTaskTitle) => {
+    const data = getData();
 
-    try {
-        let todos = getTodos();
-        let listIndex = todos.findIndex(item => item.list === list);
+    const list = data.find((l) => l.listName === listName);
 
-        if (listIndex !== -1) {
-            let taskIndex = todos[listIndex].tasks.findIndex(task => task.title === oldTask);
-            if (taskIndex !== -1) {
-                todos[listIndex].tasks[taskIndex].title = newTask;
-                saveTodos(todos);
-                console.log(`Task "${oldTask}" updated to "${newTask}" in list "${list}".`);
-            } else {
-                console.log(`Task "${oldTask}" not found in list "${list}".`);
-            }
+    if (list) {
+        const task = list.tasks.find((t) => t.title === oldTaskTitle);
+        if (task) {
+            task.title = newTaskTitle;
+            saveData(data);
+            console.log(`Task "${oldTaskTitle}" updated to "${newTaskTitle}" in list "${listName}".`);
         } else {
-            console.log(`List "${list}" not found.`);
+            console.log(`Task "${oldTaskTitle}" not found in list "${listName}".`);
         }
-    } catch (error) {
-        console.error("An error occurred, try again:", error);
+    } else {
+        console.log(`List "${listName}" not found.`);
     }
 };
 
-const deleteList = (list) => {
-    try {
-        let todos = getTodos();
-        const updatedTodos = todos.filter(item => item.list !== list);
+const deleteList = (listName) => {
+    const data = getData();
 
-        if (updatedTodos.length === todos.length) {
-            console.log(`List "${list}" not found.`);
-        } else {
-            saveTodos(updatedTodos);
-            console.log(`List "${list}" deleted successfully.`);
-        }
-    } catch (error) {
-        console.error("An error occurred, try again:", error);
+    const newData = data.filter((l) => l.listName !== listName);
+
+    if (newData.length !== data.length) {
+        saveData(newData);
+        console.log(`List "${listName}" deleted successfully.`);
+    } else {
+        console.log(`List "${listName}" not found.`);
     }
 };
 
-const deleteTask = (list, taskToDelete) => {
-    if (!taskToDelete || !taskToDelete.trim()) {
-        console.error("Task title cannot be empty.");
-        return;
-    }
+const deleteTask = (listName, taskTitle) => {
+    const data = getData();
 
-    try {
-        let todos = getTodos();
-        let listIndex = todos.findIndex(item => item.list === list);
+    const list = data.find((l) => l.listName === listName);
 
-        if (listIndex !== -1) {
-            const tasks = todos[listIndex].tasks.filter(task => task.title !== taskToDelete);
-            if (tasks.length === todos[listIndex].tasks.length) {
-                console.log(`Task "${taskToDelete}" not found in list "${list}".`);
-            } else {
-                todos[listIndex].tasks = tasks;
-                saveTodos(todos);
-                console.log(`Task "${taskToDelete}" deleted successfully from list "${list}".`);
-            }
+    if (list) {
+        const newTasks = list.tasks.filter((t) => t.title !== taskTitle);
+
+        if (newTasks.length !== list.tasks.length) {
+            list.tasks = newTasks;
+            saveData(data);
+            console.log(`Task "${taskTitle}" deleted successfully from list "${listName}".`);
         } else {
-            console.log(`List "${list}" not found.`);
+            console.log(`Task "${taskTitle}" not found in list "${listName}".`);
         }
-    } catch (error) {
-        console.error("An error occurred, try again:", error);
+    } else {
+        console.log(`List "${listName}" not found.`);
     }
 };
 
-const completeTask = (list, taskToComplete) => {
-    if (!taskToComplete || !taskToComplete.trim()) {
-        console.error("Task title cannot be empty.");
-        return;
-    }
+const completeTask = (listName, taskTitle) => {
+    const data = getData();
 
-    try {
-        let todos = getTodos();
-        let listIndex = todos.findIndex(item => item.list === list);
+    const list = data.find((l) => l.listName === listName);
 
-        if (listIndex !== -1) {
-            let task = todos[listIndex].tasks.find(task => task.title === taskToComplete);
-            if (task) {
-                task.completed = true;
-                saveTodos(todos);
-                console.log(`Task "${taskToComplete}" marked as completed in list "${list}".`);
-            } else {
-                console.log(`Task "${taskToComplete}" not found in list "${list}".`);
-            }
+    if (list) {
+        const task = list.tasks.find((t) => t.title === taskTitle);
+        if (task) {
+            task.completed = true;
+            saveData(data);
+            console.log(`Task "${taskTitle}" marked as completed in list "${listName}".`);
         } else {
-            console.log(`List "${list}" not found.`);
+            console.log(`Task "${taskTitle}" not found in list "${listName}".`);
         }
-    } catch (error) {
-        console.error("An error occurred, try again:", error);
+    } else {
+        console.log(`List "${listName}" not found.`);
     }
 };
 
