@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const fs = require('fs');
 const app = express();
@@ -30,21 +31,21 @@ app.get('/lists', (req, res) => {
     }
 });
 
-// Define the POST route to add a new task to a list
+// Define the POST route to add a new task to a list with a deadline
 app.post('/lists', (req, res) => {
     try {
-        const { list, task } = req.body;
+        const { list, task, deadline } = req.body;
         let data = getData();
 
         // Find the list, or create a new one if it doesn't exist
         let listObj = data.find(l => l.listName === list);
         if (!listObj) {
-            listObj = { listName: list, tasks: [] };
+            listObj = { listName: list, tasks: [], is_deleted: false };
             data.push(listObj);
         }
 
-        // Add the task to the list
-        listObj.tasks.push({ title: task, completed: false });
+        // Add the task to the list with the deadline
+        listObj.tasks.push({ title: task, completed: false, deadline, is_deleted: false });
 
         // Save the updated data back to the file
         saveData(data);
@@ -55,11 +56,11 @@ app.post('/lists', (req, res) => {
     }
 });
 
-// Define the PUT route to update a task in a list
+// Define the PUT route to update a task in a list (with deadline)
 app.put('/lists/:list/tasks', (req, res) => {
     try {
         const listName = req.params.list;
-        const { oldTask, newTask } = req.body;
+        const { oldTask, newTask, deadline } = req.body;
         let data = getData();
 
         let listObj = data.find(l => l.listName === listName);
@@ -68,8 +69,9 @@ app.put('/lists/:list/tasks', (req, res) => {
             const task = listObj.tasks.find(task => task.title === oldTask);
             if (task) {
                 task.title = newTask; // Update task title
+                task.deadline = deadline; // Update task deadline
                 saveData(data);
-                res.json({ message: `Task updated from "${oldTask}" to "${newTask}"` });
+                res.json({ message: `Task updated from "${oldTask}" to "${newTask}" with deadline "${deadline}"` });
             } else {
                 res.status(404).json({ message: `Task "${oldTask}" not found in list "${listName}".` });
             }
