@@ -12,7 +12,7 @@ app.use(express.json());
 // Define the GET route for /lists
 app.get('/lists', async (req, res) => {
     try {
-        const lists = await prisma.list.findMany({
+        const lists = await prisma.lists.findMany({
             where: { soft_delete: false }
         });
         res.json(lists);
@@ -30,12 +30,12 @@ app.post('/lists', async (req, res) => {
         const userIdToUse = user_id || defaultUserId;
 
         // Find or create the list
-        let existingList = await prisma.list.findFirst({
+        let existingList = await prisma.lists.findFirst({
             where: { list_name: list, soft_delete: false }
         });
 
         if (!existingList) {
-            existingList = await prisma.list.create({
+            existingList = await prisma.lists.create({
                 data: {
                     list_name: list,
                     user_id: userIdToUse
@@ -44,7 +44,7 @@ app.post('/lists', async (req, res) => {
         }
 
         // Add the task to the list
-        await prisma.task.create({
+        await prisma.tasks.create({
             data: {
                 task_title: task,
                 completed: false,
@@ -66,17 +66,17 @@ app.put('/lists/:list/tasks', async (req, res) => {
         const listName = req.params.list;
         const { oldTask, newTask, deadline } = req.body;
 
-        const list = await prisma.list.findFirst({
+        const list = await prisma.lists.findFirst({
             where: { list_name: listName, soft_delete: false }
         });
 
         if (list) {
-            const task = await prisma.task.findFirst({
+            const task = await prisma.tasks.findFirst({
                 where: { task_title: oldTask, list_id: list.list_id, soft_delete: false }
             });
 
             if (task) {
-                await prisma.task.update({
+                await prisma.tasks.update({
                     where: { task_id: task.task_id },
                     data: {
                         task_title: newTask,
@@ -100,7 +100,7 @@ app.delete('/lists/:list', async (req, res) => {
     try {
         const listName = req.params.list;
 
-        const list = await prisma.list.updateMany({
+        const list = await prisma.lists.updateMany({
             where: { list_name: listName, soft_delete: false },
             data: { soft_delete: true }
         });
@@ -121,12 +121,12 @@ app.delete('/lists/:list/tasks', async (req, res) => {
         const listName = req.params.list;
         const { task } = req.body;
 
-        const list = await prisma.list.findFirst({
+        const list = await prisma.lists.findFirst({
             where: { list_name: listName, soft_delete: false }
         });
 
         if (list) {
-            const taskRecord = await prisma.task.updateMany({
+            const taskRecord = await prisma.tasks.updateMany({
                 where: { task_title: task, list_id: list.list_id, soft_delete: false },
                 data: { soft_delete: true }
             });
