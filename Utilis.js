@@ -14,7 +14,7 @@ const saveData = (data) => {
     fs.writeFileSync("datas.json", dataJSON);
 };
 
-const createListTask = (listName, taskTitle) => {
+const createListTask = (listName, taskTitle, deadline = null) => {
     if (!taskTitle || !taskTitle.trim()) {
         console.error("Task title cannot be empty.");
         return;
@@ -25,7 +25,7 @@ const createListTask = (listName, taskTitle) => {
     let list = data.find((l) => l.listName === listName);
 
     if (!list) {
-        list = { listName, tasks: [] };
+        list = { listName, tasks: [], is_deleted: false };
         data.push(list);
     }
 
@@ -36,7 +36,7 @@ const createListTask = (listName, taskTitle) => {
         return;
     }
 
-    list.tasks.push({ title: taskTitle, completed: false });
+    list.tasks.push({ title: taskTitle, completed: false, deadline, is_deleted: false });
     saveData(data);
     console.log("Task added successfully");
 };
@@ -49,7 +49,7 @@ const listAllLists = () => {
     } else {
         console.log("All lists:");
         data.forEach(list => {
-            const tasks = list.tasks.map(task => `${task.title} (Completed: ${task.completed})`).join(', ');
+            const tasks = list.tasks.map(task => `${task.title} (Completed: ${task.completed}, Deadline: ${task.deadline || 'No deadline'})`).join(', ');
             console.log(`List: ${list.listName}, Tasks: ${tasks}`);
         });
     }
@@ -61,28 +61,14 @@ const readListTasks = (listName) => {
     const list = data.find((l) => l.listName === listName);
 
     if (list) {
-        const tasks = list.tasks.map(task => `${task.title} (Completed: ${task.completed})`).join(', ');
+        const tasks = list.tasks.map(task => `${task.title} (Completed: ${task.completed}, Deadline: ${task.deadline || 'No deadline'})`).join(', ');
         console.log(`Tasks for list "${listName}": ${tasks}`);
     } else {
         console.log(`List "${listName}" not found.`);
     }
 };
 
-const updateListName = (oldListName, newListName) => {
-    const data = getData();
-
-    const list = data.find((l) => l.listName === oldListName);
-
-    if (list) {
-        list.listName = newListName;
-        saveData(data);
-        console.log(`List name "${oldListName}" updated to "${newListName}"`);
-    } else {
-        console.log(`List "${oldListName}" not found.`);
-    }
-};
-
-const updateTask = (listName, oldTaskTitle, newTaskTitle) => {
+const updateTask = (listName, oldTaskTitle, newTaskTitle, newDeadline = null) => {
     const data = getData();
 
     const list = data.find((l) => l.listName === listName);
@@ -91,43 +77,11 @@ const updateTask = (listName, oldTaskTitle, newTaskTitle) => {
         const task = list.tasks.find((t) => t.title === oldTaskTitle);
         if (task) {
             task.title = newTaskTitle;
+            task.deadline = newDeadline; // Update task deadline
             saveData(data);
-            console.log(`Task "${oldTaskTitle}" updated to "${newTaskTitle}" in list "${listName}".`);
+            console.log(`Task "${oldTaskTitle}" updated to "${newTaskTitle}" with deadline "${newDeadline}" in list "${listName}".`);
         } else {
             console.log(`Task "${oldTaskTitle}" not found in list "${listName}".`);
-        }
-    } else {
-        console.log(`List "${listName}" not found.`);
-    }
-};
-
-const deleteList = (listName) => {
-    const data = getData();
-
-    const newData = data.filter((l) => l.listName !== listName);
-
-    if (newData.length !== data.length) {
-        saveData(newData);
-        console.log(`List "${listName}" deleted successfully.`);
-    } else {
-        console.log(`List "${listName}" not found.`);
-    }
-};
-
-const deleteTask = (listName, taskTitle) => {
-    const data = getData();
-
-    const list = data.find((l) => l.listName === listName);
-
-    if (list) {
-        const newTasks = list.tasks.filter((t) => t.title !== taskTitle);
-
-        if (newTasks.length !== list.tasks.length) {
-            list.tasks = newTasks;
-            saveData(data);
-            console.log(`Task "${taskTitle}" deleted successfully from list "${listName}".`);
-        } else {
-            console.log(`Task "${taskTitle}" not found in list "${listName}".`);
         }
     } else {
         console.log(`List "${listName}" not found.`);
@@ -157,9 +111,6 @@ module.exports = {
     createListTask,
     listAllLists,
     readListTasks,
-    updateListName,
     updateTask,
-    deleteList,
-    deleteTask,
     completeTask,
 };
