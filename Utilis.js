@@ -60,6 +60,35 @@ const createListTask = async (listName, taskTitle, deadline = null) => {
     }
 };
 
+// Function to mark a task as completed
+const completeTask = async (listName, taskTitle) => {
+    try {
+        const list = await prisma.lists.findFirst({
+            where: { list_name: listName, soft_delete: false }
+        });
+
+        if (list) {
+            const task = await prisma.tasks.findFirst({
+                where: { task_title: taskTitle, list_id: list.list_id, soft_delete: false }
+            });
+
+            if (task) {
+                await prisma.tasks.update({
+                    where: { task_id: task.task_id },
+                    data: { completed: true }
+                });
+                console.log(`Task "${taskTitle}" marked as completed.`);
+            } else {
+                console.log(`Task "${taskTitle}" not found in list "${listName}".`);
+            }
+        } else {
+            console.log(`List "${listName}" notfound.`);
+        }
+    } catch (error) {
+        console.error("Error marking task as completed:", error.message);
+    }
+};
+
 // Function to list all lists
 const listAllLists = async () => {
     try {
@@ -129,35 +158,6 @@ const updateTask = async (listName, oldTaskTitle, newTaskTitle, newDeadline = nu
     }
 };
 
-// Function to mark a task as completed
-const completeTask = async (listName, taskTitle) => {
-    try {
-        const list = await prisma.lists.findFirst({
-            where: { list_name: listName, soft_delete: false }
-        });
-
-        if (list) {
-            const task = await prisma.tasks.findFirst({
-                where: { task_title: taskTitle, list_id: list.list_id, soft_delete: false }
-            });
-
-            if (task) {
-                await prisma.tasks.update({
-                    where: { task_id: task.task_id },
-                    data: { completed: true }
-                });
-                console.log(`Task "${taskTitle}" marked as completed.`);
-            } else {
-                console.log(`Task "${taskTitle}" not found in list "${listName}".`);
-            }
-        } else {
-            console.log(`List "${listName}" not found.`);
-        }
-    } catch (error) {
-        console.error("Error marking task as completed:", error.message);
-    }
-};
-
 // Function to delete a list (soft delete)
 const deleteList = async (listName) => {
     try {
@@ -195,10 +195,10 @@ const deleteTask = async (listName, taskTitle) => {
 // Export the functions
 module.exports = {
     createListTask,
+    completeTask,
     listAllLists,
     readListTasks,
     updateTask,
-    completeTask,
     deleteList,
     deleteTask,
 };

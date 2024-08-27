@@ -60,6 +60,41 @@ app.post('/lists', async (req, res) => {
     }
 });
 
+// Define the PATCH route to mark a task as completed
+app.patch('/lists/:list/tasks/complete', async (req, res) => {
+    try {
+        const listName = req.params.list;
+        const { task } = req.body;
+
+        // Find the list
+        const list = await prisma.lists.findFirst({
+            where: { list_name: listName, soft_delete: false }
+        });
+
+        if (list) {
+            // Find the task in the list
+            const taskToComplete = await prisma.tasks.findFirst({
+                where: { task_title: task, list_id: list.list_id, soft_delete: false }
+            });
+
+            if (taskToComplete) {
+                // Update the task to mark it as completed
+                await prisma.tasks.update({
+                    where: { task_id: taskToComplete.task_id },
+                    data: { completed: true }
+                });
+                res.json({ message: `Task "${task}" marked as completed in list "${listName}".` });
+            } else {
+                res.status(404).json({ message: `Task "${task}" not found in list "${listName}".` });
+            }
+        } else {
+            res.status(404).json({ message: `List "${listName}" not found.` });
+        }
+    } catch (error) {
+        res.status(500).json({ message: "An error occurred", error: error.message });
+    }
+});
+
 // Define the PUT route to update a task in a list (with deadline)
 app.put('/lists/:list/tasks', async (req, res) => {
     try {
