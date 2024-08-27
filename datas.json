@@ -1,7 +1,10 @@
 {
-  "sunday": {
+  "Work": {
     "tasks": [
-      "chess"
+      {
+        "title": "playing football",
+        "completed": false
+      }
     ]
   }
 }
