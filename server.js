@@ -1,76 +1,83 @@
-require('dotenv').config();
 const express = require('express');
-const fs = require('fs');
+const { Pool } = require('pg');
+require('dotenv').config();
+
 const app = express();
 const port = 3000;
 
+// Set up the PostgreSQL connection pool
+const pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+});
+
 app.use(express.json());
 
-// Helper functions to get and save data
-const getData = () => {
+// Helper function to query the database
+const queryDatabase = async (query, params) => {
     try {
-        const dataBuffer = fs.readFileSync('datas.json');
-        return JSON.parse(dataBuffer.toString());
-    } catch (e) {
-        return []; // Return an empty array if the file doesn't exist or there's an error
+        const result = await pool.query(query, params);
+        return result.rows;
+    } catch (error) {
+        throw new Error(error.message);
     }
 };
 
-const saveData = (data) => {
-    const dataJSON = JSON.stringify(data, null, 2);
-    fs.writeFileSync('datas.json', dataJSON);
-};
-
 // Define the GET route for /lists
-app.get('/lists', (req, res) => {
+app.get('/lists', async (req, res) => {
     try {
-        const data = getData();
-        res.json(data); // Send the lists as a JSON response
+        const lists = await queryDatabase('SELECT * FROM lists WHERE soft_delete = false', []);
+        res.json(lists);
     } catch (error) {
         res.status(500).json({ message: "An error occurred", error: error.message });
     }
 });
 
-// Define the POST route to add a new task to a list with a deadline
-app.post('/lists', (req, res) => {
+// Define the POST route to add a new task to a list
+app.post('/lists', async (req, res) => {
     try {
         const { list, task, deadline } = req.body;
-        let data = getData();
 
-        // Find the list, or create a new one if it doesn't exist
-        let listObj = data.find(l => l.listName === list);
-        if (!listObj) {
-            listObj = { listName: list, tasks: [], is_deleted: false };
-            data.push(listObj);
+        // Find the list or create a new one if it doesn't exist
+        let listResult = await queryDatabase('SELECT * FROM lists WHERE list_name = $1 AND soft_delete = false', [list]);
+        if (listResult.length === 0) {
+            const newList = await queryDatabase(
+                'INSERT INTO lists (list_name, user_id) VALUES ($1, $2) RETURNING *',
+                [list, 1] // Replace `1` with actual user_id
+            );
+            listResult = newList;
         }
 
-        // Add the task to the list with the deadline
-        listObj.tasks.push({ title: task, completed: false, deadline, is_deleted: false });
+        const listId = listResult[0].list_id;
 
-        // Save the updated data back to the file
-        saveData(data);
+        // Add the task to the list
+        await queryDatabase(
+            'INSERT INTO tasks (task_title, completed, list_id, deadline, soft_delete) VALUES ($1, $2, $3, $4, $5)',
+            [task, false, listId, deadline, false]
+        );
 
-        res.status(201).json({ message: "Task added successfully", list: listObj });
+        res.status(201).json({ message: "Task added successfully", list: listResult[0] });
     } catch (error) {
         res.status(500).json({ message: "An error occurred", error: error.message });
     }
 });
 
 // Define the PUT route to update a task in a list (with deadline)
-app.put('/lists/:list/tasks', (req, res) => {
+app.put('/lists/:list/tasks', async (req, res) => {
     try {
         const listName = req.params.list;
         const { oldTask, newTask, deadline } = req.body;
-        let data = getData();
 
-        let listObj = data.find(l => l.listName === listName);
+        const listResult = await queryDatabase('SELECT * FROM lists WHERE list_name = $1 AND soft_delete = false', [listName]);
 
-        if (listObj) {
-            const task = listObj.tasks.find(task => task.title === oldTask);
-            if (task) {
-                task.title = newTask; // Update task title
-                task.deadline = deadline; // Update task deadline
-                saveData(data);
+        if (listResult.length > 0) {
+            const listId = listResult[0].list_id;
+            const taskResult = await queryDatabase('SELECT * FROM tasks WHERE task_title = $1 AND list_id = $2 AND soft_delete = false', [oldTask, listId]);
+
+            if (taskResult.length > 0) {
+                await queryDatabase(
+                    'UPDATE tasks SET task_title = $1, deadline = $2 WHERE task_id = $3',
+                    [newTask, deadline, taskResult[0].task_id]
+                );
                 res.json({ message: `Task updated from "${oldTask}" to "${newTask}" with deadline "${deadline}"` });
             } else {
                 res.status(404).json({ message: `Task "${oldTask}" not found in list "${listName}".` });
@@ -83,17 +90,14 @@ app.put('/lists/:list/tasks', (req, res) => {
     }
 });
 
-// Define the DELETE route to delete a list
-app.delete('/lists/:list', (req, res) => {
+// Define the DELETE route to delete a list (soft delete)
+app.delete('/lists/:list', async (req, res) => {
     try {
         const listName = req.params.list;
-        let data = getData();
 
-        const initialLength = data.length;
-        data = data.filter(list => list.listName !== listName);
+        const listResult = await queryDatabase('UPDATE lists SET soft_delete = true WHERE list_name = $1 RETURNING *', [listName]);
 
-        if (data.length < initialLength) {
-            saveData(data);
+        if (listResult.length > 0) {
             res.json({ message: `List "${listName}" deleted successfully.` });
         } else {
             res.status(404).json({ message: `List "${listName}" not found.` });
@@ -103,21 +107,19 @@ app.delete('/lists/:list', (req, res) => {
     }
 });
 
-// Define the DELETE route to delete a task from a list
-app.delete('/lists/:list/tasks', (req, res) => {
+// Define the DELETE route to delete a task from a list (soft delete)
+app.delete('/lists/:list/tasks', async (req, res) => {
     try {
         const listName = req.params.list;
         const { task } = req.body;
-        let data = getData();
 
-        let listObj = data.find(l => l.listName === listName);
+        const listResult = await queryDatabase('SELECT * FROM lists WHERE list_name = $1 AND soft_delete = false', [listName]);
 
-        if (listObj) {
-            const initialLength = listObj.tasks.length;
-            listObj.tasks = listObj.tasks.filter(t => t.title !== task);
+        if (listResult.length > 0) {
+            const listId = listResult[0].list_id;
+            const taskResult = await queryDatabase('UPDATE tasks SET soft_delete = true WHERE task_title = $1 AND list_id = $2 RETURNING *', [task, listId]);
 
-            if (listObj.tasks.length < initialLength) {
-                saveData(data);
+            if (taskResult.length > 0) {
                 res.json({ message: `Task "${task}" deleted successfully from list "${listName}".` });
             } else {
                 res.status(404).json({ message: `Task "${task}" not found in list "${listName}".` });
