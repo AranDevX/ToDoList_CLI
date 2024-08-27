@@ -1,0 +1,34 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model lists {
+  list_id     Int      @id @default(autoincrement())
+  list_name   String   @db.VarChar(100)
+  user_id     Int?
+  soft_delete Boolean? @default(false)
+  users       users?   @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction)
+  tasks       tasks[]
+}
+
+model tasks {
+  task_id     Int       @id @default(autoincrement())
+  task_title  String    @db.VarChar(255)
+  completed   Boolean?  @default(false)
+  list_id     Int?
+  deadline    DateTime? @db.Timestamp(6)
+  soft_delete Boolean?  @default(false)
+  lists       lists?    @relation(fields: [list_id], references: [list_id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model users {
+  user_id  Int     @id @default(autoincrement())
+  username String  @db.VarChar(100)
+  password String  @db.VarChar(100)
+  lists    lists[]
+}
