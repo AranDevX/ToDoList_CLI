@@ -1,1 +1,14 @@
-[]
+[
+  {
+    "listName": "My First List",
+    "tasks": [
+      {
+        "title": "Finish Homework",
+        "completed": false,
+        "deadline": "2024-08-31T23:59:00Z",
+        "is_deleted": false
+      }
+    ],
+    "is_deleted": false
+  }
+]
