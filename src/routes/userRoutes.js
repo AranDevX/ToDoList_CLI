@@ -5,7 +5,7 @@ const userController = require('../controllers/userController');
 
 const router = express.Router();
 
-// Route to register a new user (Promise-based)
+// Route to register a new user 
 router.post('/register', userController.registerUser);
 
 module.exports = router;

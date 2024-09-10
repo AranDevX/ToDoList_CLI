@@ -3,17 +3,17 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"  
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
 model lists {
-  list_id     Int      @id @default(autoincrement())
-  list_name   String   @db.VarChar(100)
+  list_id     Int     @id @default(autoincrement())
+  list_name   String  @db.VarChar(100)
   user_id     Int?
-  soft_delete Boolean  @default(false)  
-  users       users?   @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction)
-  tasks       tasks[]  
+  soft_delete Boolean @default(false)
+  users       users?  @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction)
+  tasks       tasks[]
 }
 
 model tasks {
@@ -28,7 +28,7 @@ model tasks {
 
 model users {
   user_id  Int     @id @default(autoincrement())
-  username String  @unique  // Make usernames unique
+  username String  @unique
   password String  @db.VarChar(100)
-  lists    lists[] 
+  lists    lists[]
 }

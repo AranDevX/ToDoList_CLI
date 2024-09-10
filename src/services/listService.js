@@ -4,7 +4,7 @@ const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcrypt');
 const prisma = new PrismaClient();
 
-// Get all lists along with tasks (Promise-based)
+// Get all lists along with tasks 
 const listAllLists = () => {
     return prisma.lists.findMany({
         where: { soft_delete: false },
@@ -12,7 +12,7 @@ const listAllLists = () => {
     });
 };
 
-// Read tasks from a specific list (Promise-based)
+// Read tasks from a specific list 
 const readListTasks = (listName) => {
     return prisma.lists.findFirst({
         where: { list_name: listName, soft_delete: false },
@@ -26,7 +26,7 @@ const readListTasks = (listName) => {
     });
 };
 
-// Create a list and add a task (Promise-based)
+// Create a list and add a task 
 const createListTask = (listName, taskTitle, deadline = null) => {
     if (!taskTitle.trim()) {
         return Promise.reject(new Error("Task title cannot be empty."));
@@ -59,7 +59,7 @@ const createListTask = (listName, taskTitle, deadline = null) => {
     });
 };
 
-// Mark a task as completed (Promise-based)
+// Mark a task as completed 
 const completeTask = (listName, taskTitle) => {
     return prisma.lists.findFirst({
         where: { list_name: listName, soft_delete: false }
@@ -81,7 +81,7 @@ const completeTask = (listName, taskTitle) => {
     });
 };
 
-// Update a task in a list (Promise-based)
+// Update a task in a list 
 const updateTask = (listName, oldTaskTitle, newTaskTitle, newDeadline = null) => {
     return prisma.lists.findFirst({
         where: { list_name: listName, soft_delete: false }
@@ -106,7 +106,7 @@ const updateTask = (listName, oldTaskTitle, newTaskTitle, newDeadline = null) =>
     });
 };
 
-// Soft delete a list (Promise-based)
+// Soft delete a list 
 const deleteList = (listName) => {
     return prisma.lists.updateMany({
         where: { list_name: listName, soft_delete: false },
@@ -114,7 +114,7 @@ const deleteList = (listName) => {
     });
 };
 
-// Soft delete a task from a list (Promise-based)
+// Soft delete a task from a list 
 const deleteTask = (listName, taskTitle) => {
     return prisma.lists.findFirst({
         where: { list_name: listName, soft_delete: false }
@@ -129,13 +129,13 @@ const deleteTask = (listName, taskTitle) => {
     });
 };
 
-// Hash the password before saving the user (Promise-based)
+// Hash the password before saving the user 
 const hashPassword = (password) => {
     const saltRounds = 10;
     return bcrypt.hash(password, saltRounds);
 };
 
-// Create a user with a hashed password (Promise-based)
+// Create a user with a hashed password 
 const createUser = (username, password) => {
     return prisma.users.findUnique({
         where: { username }
