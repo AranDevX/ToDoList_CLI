@@ -1,5 +1,5 @@
 const express = require('express');
-const userService = require('../../../services/user/userService');
+const userService = require('../../../../services/user/userService');
 
 const router = express.Router();
 

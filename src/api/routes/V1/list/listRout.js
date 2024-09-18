@@ -1,5 +1,5 @@
 const express = require('express');
-const listCRUD = require('../../../services/list/listCRUD'); // Import CRUD functions
+const listCRUD = require('../../../../services/list/listCRUD');
 
 const router = express.Router();
 
