@@ -1,5 +1,6 @@
 const express = require('express');
-const listCRUD = require('../../../../services/list/listCRUD');  // Adjust the path if necessary
+const listCRUD = require('../../../../services/list/listCRUD');  
+const authenticateToken = require('../../../middlewares/authMiddleware'); 
 
 const router = express.Router();
 
