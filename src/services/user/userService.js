@@ -8,13 +8,20 @@ const hashPassword = async (password) => {
     return await bcrypt.hash(password, saltRounds);
 };
 
-// Create a user with a hashed password
-const createUser = async (username, password) => {
+// Check if a user exists by username
+const userExists = async (username) => {
     const existingUser = await prisma.users.findUnique({
         where: { username }
     });
 
-    if (existingUser) {
+    return !!existingUser; // Returns true if user exists, otherwise false
+};
+
+// Create a user with a hashed password
+const createUser = async (username, password) => {
+    const userAlreadyExists = await userExists(username);
+
+    if (userAlreadyExists) {
         throw new Error('Username is already taken.');
     }
 
@@ -28,5 +35,6 @@ const createUser = async (username, password) => {
 };
 
 module.exports = {
-    createUser
+    createUser,
+    userExists
 };
