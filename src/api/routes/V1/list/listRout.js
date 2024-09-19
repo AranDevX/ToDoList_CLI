@@ -16,16 +16,15 @@ router.get('/', async (req, res) => {
 });
 
 // Route to create a new task in a list
-router.post('/add', async (req, res) => {
-    console.log('POST /add route hit');  // Logging for debugging
-    const { listName, taskTitle, deadline } = req.body;
+router.post('/add', authenticateToken, async (req, res) => {
+    const { listName, taskTitle, deadline } = req.body; 
+    const user_id = req.user.user_id; 
     try {
-        console.log('Request body:', req.body);  // Log the request body
-        await listCRUD.createListTask(listName, taskTitle, deadline);
+        await listCRUD.createListTask(listName, taskTitle, deadline, user_id);
         res.status(201).json({ message: 'Task added successfully' });
     } catch (error) {
-        console.error('Error adding task:', error);  // Log the error
-        res.status(500).json({ message: error.message });
+        console.error('Error adding task:', error); // Log the error for debugging
+        res.status(500).json({ message: 'Internal server error' });
     }
 });
 
