@@ -26,6 +26,16 @@ router.post('/add', authenticateToken, async (req, res) => {
     }
 });
 
-// Other list routes for updating or deleting lists...
+// Route to delete a list
+router.delete('/:listName', authenticateToken, async (req, res) => {
+    const { listName } = req.params;
+    const user_id = req.user.user_id;
+    try {
+        await listCRUD.deleteList(listName, user_id);
+        res.json({ message: `List "${listName}" deleted successfully.` });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
 
 module.exports = router;
