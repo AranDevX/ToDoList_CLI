@@ -19,7 +19,7 @@ const createTask = async (taskTitle, deadline, listId, user_id) => {
         data: {
             task_title: taskTitle,
             list_id: listId,
-            deadline: deadline ? new Date(deadline) : null,
+            deadline: deadline ? new Date(deadline) : null,  // Ensure proper date format
             user_id,
             completed: false,
             soft_delete: false
@@ -44,7 +44,7 @@ const completeTask = async (listId, taskId, user_id) => {
 };
 
 // Update a task
-const updateTask = async (listId, oldTaskTitle, newTaskTitle, newDeadline = null, user_id) => {
+const updateTask = async (listId, taskId, newTaskTitle, newDeadline = null, user_id) => {
     const list = await prisma.lists.findFirst({
         where: { list_id: listId, user_id, soft_delete: false }
     });
@@ -54,27 +54,35 @@ const updateTask = async (listId, oldTaskTitle, newTaskTitle, newDeadline = null
     }
 
     const task = await prisma.tasks.findFirst({
-        where: { task_title: oldTaskTitle, list_id: list.list_id, soft_delete: false }
+        where: { task_id: taskId, list_id: list.list_id, soft_delete: false }
     });
 
     if (!task) {
-        throw new Error(`Task "${oldTaskTitle}" not found.`);
+        throw new Error(`Task not found.`);
     }
 
     return await prisma.tasks.update({
         where: { task_id: task.task_id },
         data: {
             task_title: newTaskTitle,
-            deadline: newDeadline ? new Date(newDeadline) : task.deadline
+            deadline: newDeadline ? new Date(newDeadline) : task.deadline  // Use existing deadline if not provided
         }
     });
 };
 
 // Soft delete a task
 const deleteTask = async (listId, taskId, user_id) => {
-    return await prisma.tasks.updateMany({
-        where: { task_id: taskId, list_id: listId, user_id, soft_delete: false },
-        data: { soft_delete: true }
+    const task = await prisma.tasks.findFirst({
+        where: { task_id: taskId, list_id: listId, user_id, soft_delete: false }
+    });
+
+    if (!task) {
+        throw new Error('Task not found.');
+    }
+
+    return await prisma.tasks.update({
+        where: { task_id: taskId },
+        data: { soft_delete: true }  // Soft delete the task
     });
 };
 
