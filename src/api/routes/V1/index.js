@@ -1,17 +1,12 @@
+// /src/api/routes/V1/index.js
 const express = require('express');
-const listRoutes = require('./list/listRout');  // List routes
-const userRoutes = require('./user/authRout');  // User routes
-const taskRoutes = require('./task/taskRout');  // Task routes
-
 const router = express.Router();
 
-// Mount list routes at /lists
-router.use('/lists', listRoutes);
+// Import route handlers
+const userRoutes = require('./user/authRout');  // Path to your auth routes
 
-// Mount task routes at /tasks
-router.use('/tasks', taskRoutes);  
-
-// Mount user routes at /user
+// Mount the user routes under /user
+console.log('Mounting /api/v1/user routes...');
 router.use('/user', userRoutes);
 
 module.exports = router;
