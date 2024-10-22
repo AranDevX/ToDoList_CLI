@@ -1,6 +1,8 @@
+// /src/api/routes/V1/list/listRout.js
 const express = require('express');
-const listCRUD = require('../../../../services/list/listCRUD');  // Import the correct service
-const authenticateToken = require('../../../middlewares/authMiddleware');  // Import the auth middleware
+const listCRUD = require('../../../../services/list/listCRUD');
+const taskRoutes = require('../task/taskRout');  // Import task routes
+const authenticateToken = require('../../../middlewares/authMiddleware');
 
 const router = express.Router();
 
@@ -19,21 +21,28 @@ router.post('/add', authenticateToken, async (req, res) => {
     const { listName } = req.body;
     const user_id = req.user.user_id;
 
+    if (!listName || listName.trim() === '') {
+        return res.status(400).json({ message: 'List name cannot be empty' });
+    }
+
     try {
-        await listCRUD.createList(listName, user_id);  // Create a new list
+        await listCRUD.createList(listName, user_id);
         res.status(201).json({ message: 'List created successfully' });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 });
 
+// Mount task routes under /lists/:listId/tasks
+router.use('/:listId/tasks', taskRoutes);  // Ensure tasks are nested under lists
+
 // Soft delete a list by its ID for the authenticated user
 router.delete('/:id', authenticateToken, async (req, res) => {
-    const { id } = req.params;  // Get list_id from the URL
-    const user_id = req.user.user_id;  // Get user_id from the authentication token
+    const { id } = req.params;
+    const user_id = req.user.user_id;
 
     try {
-        const result = await listCRUD.deleteList(id, user_id);  // Call deleteList from listCRUD
+        const result = await listCRUD.deleteList(id, user_id);
 
         if (result.count === 0) {
             return res.status(404).json({ message: "List not found or already deleted." });

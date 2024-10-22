@@ -16,6 +16,6 @@ router.use('/lists', listRoutes);
 
 // Mount the task routes under /tasks
 console.log('Mounting /api/v1/tasks routes...');
-router.use('/tasks', taskRoutes);
+router.use('/tasks', taskRoutes);  // Task routes mounted separately
 
 module.exports = router;
