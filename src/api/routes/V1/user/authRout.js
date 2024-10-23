@@ -26,13 +26,6 @@ router.post('/register', async (req, res) => {
     }
 });
 
-// Log all registered routes for user
-router.stack.forEach(function(r) {
-    if (r.route && r.route.path) {
-        console.log(`Registered user route: ${r.route.path}`);
-    }
-});
-
 // Route to login a user and generate a JWT
 router.post('/login', async (req, res) => {
     const { username, password } = req.body;
@@ -53,9 +46,13 @@ router.post('/login', async (req, res) => {
             return res.status(401).json({ message: 'Invalid username or password' });
         }
 
-        // Generate JWT token
+        // Include the role in the JWT payload
         const token = jwt.sign(
-            { user_id: user.user_id, username: user.username },
+            {
+                user_id: user.user_id,
+                username: user.username,
+                role: user.role  // Add the role to the JWT token
+            },
             secretKey,
             { expiresIn: '1h' } // Token valid for 1 hour
         );
