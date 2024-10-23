@@ -67,12 +67,13 @@ router.put('/:taskId', authenticateToken, async (req, res) => {
 // Route to delete a task
 router.delete('/:taskId', authenticateToken, async (req, res) => {
     const { taskId } = req.params;
+    const { listId } = req.body;  // Ensure listId is passed in the request body
     const user_id = req.user.user_id;
 
-    console.log(`DELETE request for taskId: ${taskId}, user_id: ${user_id}`);
+    console.log(`DELETE request for taskId: ${taskId}, listId: ${listId}, user_id: ${user_id}`);
 
     try {
-        await taskCRUD.deleteTask(taskId, user_id);
+        await taskCRUD.deleteTask(listId, taskId, user_id);  // Pass both listId and taskId
         console.log('Task deleted successfully.');
         res.json({ message: 'Task deleted successfully' });
     } catch (error) {
@@ -80,6 +81,7 @@ router.delete('/:taskId', authenticateToken, async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 });
+
 
 // New Route to Get All Tasks for the Authenticated User
 router.get('/all', authenticateToken, async (req, res) => {
