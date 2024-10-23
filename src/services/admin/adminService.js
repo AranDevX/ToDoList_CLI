@@ -21,7 +21,7 @@ const getAllUsers = async () => {
 const updateUserRole = async (userId, newRole) => {
     try {
         const user = await prisma.user.update({
-            where: { id: userId },  // Find the user by ID
+            where: { user_id: userId },  // Use the correct field name 'user_id'
             data: { role: newRole }  // Update the role
         });
         return user;
