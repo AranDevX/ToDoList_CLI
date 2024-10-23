@@ -1,5 +1,4 @@
 const jwt = require('jsonwebtoken');
-
 const secretKey = process.env.JWT_SECRET || 'supersecretkey';
 
 const authenticateToken = (req, res, next) => {
@@ -11,9 +10,8 @@ const authenticateToken = (req, res, next) => {
     }
 
     try {
-        // Verify the token
         const user = jwt.verify(token, secretKey);
-        req.user = user; // Attach the user info to the request object
+        req.user = user;  // Attach user info (including role) to the request
         next();
     } catch (error) {
         console.error('Token verification error:', error);
