@@ -1,6 +1,8 @@
 {
   "dependencies": {
+    "@castleio/sdk": "^2.2.2",
     "@prisma/client": "^5.19.1",
+    "axios": "^1.7.7",
     "bcrypt": "^5.1.1",
     "bcryptjs": "^2.4.3",
     "body": "^5.1.0",
