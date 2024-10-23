@@ -30,5 +30,6 @@ model users {
   user_id  Int     @id @default(autoincrement())
   username String  @unique
   password String  @db.VarChar(100)
+  role     String  @default("user")  // Added this field to manage user roles (default to 'user')
   lists    lists[]
 }

@@ -6,7 +6,7 @@ const prisma = new PrismaClient();
  */
 const getAllUsers = async () => {
     try {
-        const users = await prisma.user.findMany();
+        const users = await prisma.user.findMany();  // Fetch all users from the DB
         return users;
     } catch (error) {
         throw new Error('Error fetching users from the database');
@@ -21,8 +21,8 @@ const getAllUsers = async () => {
 const updateUserRole = async (userId, newRole) => {
     try {
         const user = await prisma.user.update({
-            where: { id: userId },
-            data: { role: newRole }
+            where: { id: userId },  // Find the user by ID
+            data: { role: newRole }  // Update the role
         });
         return user;
     } catch (error) {
