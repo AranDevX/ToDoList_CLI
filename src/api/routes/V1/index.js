@@ -5,6 +5,7 @@ const router = express.Router();
 const userRoutes = require('./user/authRout');  // User routes
 const listRoutes = require('./list/listRout');  // List routes
 const taskRoutes = require('./task/taskRout');  // Task routes
+const adminRoutes = require('./admin/adminRout');  // Admin routes
 
 // Mount the user routes under /user
 console.log('Mounting /api/v1/user routes...');
@@ -16,6 +17,10 @@ router.use('/lists', listRoutes);
 
 // Mount the task routes under /tasks
 console.log('Mounting /api/v1/tasks routes...');
-router.use('/tasks', taskRoutes);  // Task routes mounted separately
+router.use('/tasks', taskRoutes);
+
+// Mount the admin routes under /admin
+console.log('Mounting /api/v1/admin routes...');
+router.use('/admin', adminRoutes);
 
 module.exports = router;
