@@ -1,7 +1,7 @@
 const express = require('express');
 const checkAdmin = require('../../../middlewares/checkAdminMiddleware');  // Ensure admin access
-const authenticateToken = require('../../../middlewares/authMiddleware');  // Ensure user is authenticated
-const adminService = require('../../../services/admin/adminService');  // Import the admin service
+const adminService = require('../../../../services/admin/adminService');
+const authenticateToken = require('../../../middlewares/authMiddleware');
 
 const router = express.Router();
 
