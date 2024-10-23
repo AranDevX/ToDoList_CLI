@@ -35,18 +35,19 @@ const createTask = async (taskTitle, deadline, listId, user_id) => {
 
 // Complete the Task
 const completeTask = async (listId, taskId, user_id) => {
-    // Ensure listId is an integer
+    // Ensure listId and taskId are integers
     const listIdInt = parseInt(listId, 10);
+    const taskIdInt = parseInt(taskId, 10);
 
-    console.log(`Completing task with taskId: ${taskId} and listId: ${listIdInt} for user: ${user_id}`);
+    console.log(`Completing task with taskId: ${taskIdInt} and listId: ${listIdInt} for user: ${user_id}`);
 
     // Find the task to ensure it exists and belongs to the correct list
     const task = await prisma.tasks.findFirst({
-        where: { task_id: taskId, list_id: listIdInt, soft_delete: false }
+        where: { task_id: taskIdInt, list_id: listIdInt, soft_delete: false }
     });
 
     if (!task) {
-        console.error(`Task with taskId: ${taskId} and listId: ${listIdInt} not found or is soft deleted.`);
+        console.error(`Task with taskId: ${taskIdInt} and listId: ${listIdInt} not found or is soft deleted.`);
         throw new Error('Task not found.');
     }
 
@@ -58,7 +59,6 @@ const completeTask = async (listId, taskId, user_id) => {
         data: { completed: true }
     });
 };
-
 
 // Update a task
 const updateTask = async (listId, taskId, newTaskTitle, newDeadline = null, user_id) => {
@@ -94,9 +94,10 @@ const updateTask = async (listId, taskId, newTaskTitle, newDeadline = null, user
 const deleteTask = async (listId, taskId, user_id) => {
     // Ensure listId is an integer
     const listIdInt = parseInt(listId, 10);
+    const taskIdInt = parseInt(taskId, 10);
 
     const task = await prisma.tasks.findFirst({
-        where: { task_id: taskId, list_id: listIdInt, soft_delete: false }
+        where: { task_id: taskIdInt, list_id: listIdInt, soft_delete: false }
     });
 
     if (!task) {
@@ -104,7 +105,7 @@ const deleteTask = async (listId, taskId, user_id) => {
     }
 
     return await prisma.tasks.update({
-        where: { task_id: taskId },
+        where: { task_id: taskIdInt },
         data: { soft_delete: true }  // Soft delete the task
     });
 };
